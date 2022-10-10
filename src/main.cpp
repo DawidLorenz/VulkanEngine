@@ -1,25 +1,57 @@
-#include "main.hpp"
+#define GLFW_INCLUDE_VULKAN
 
-#include <vulkan/vulkan.h>
+#include "render/VulkanRenderer.h"
+#include "Utils/Profiler.h"
+#include "Utils/Logger.h"
 
-int main()
+#include <GLFW/glfw3.h>
+
+#include <stdexcept>
+#include <vector>
+#include <iostream>
+
+GLFWwindow * window;
+VulkanRenderer vulkanRenderer;
+
+void initWindow(std::string wName = "Test Window", 
+                const int width = 800,
+                const int height = 600)
 {
-    VkApplicationInfo appInfo = {};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = VK_APP_NAME;
-    appInfo.pEngineName = VK_ENGINE_NAME;
+  // Init GLFW
+  glfwInit();
 
-    VkInstanceCreateInfo instatnceInfo = {};
-    instatnceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instatnceInfo.pApplicationInfo = &appInfo;
- 
-    VkInstance instance = {};
+  // Set GLFW to NOT work with OpenGL
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    VkResult result = vkCreateInstance(&instatnceInfo, 0, &instance);
-    if (result == VK_SUCCESS)
-    {
-        std::cout << "Successfully create vulkan instatnc\n";
-    }
-    std::cout << "Dawid Lorenz\n";
-    return 0;
+  window = glfwCreateWindow(width, height, wName.c_str(), nullptr, nullptr);
+}
+
+int main(int argc, char** argv)
+{
+  VK_PROFILE_BEGIN_SESSION("VK_ENGINE", "Result.json");
+
+  // Create Window
+  initWindow("Test Window", 800, 600);
+
+  // Create Vulkan Renderer instance
+  if (vulkanRenderer.init(window) == EXIT_FAILURE)
+  {
+    return EXIT_FAILURE;
+  }
+
+  // Loop until closed
+  while (!glfwWindowShouldClose(window))
+  {
+    glfwPollEvents();
+  }
+  
+  vulkanRenderer.cleanup();
+
+  // Destroy GLFW window and stop GLFW
+  glfwDestroyWindow(window);
+  glfwTerminate();
+
+  VK_PROFILE_END_SESSION();
+  return EXIT_SUCCESS;
 }
